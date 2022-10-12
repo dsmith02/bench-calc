@@ -1,5 +1,6 @@
 #include "postfix.h"
 #include "stack.h"
+#include <math.h>
 
 // evaluate expression stored as an array of string tokens
 double evaluate_postfix_expression(char ** args, int nargs) 
@@ -33,6 +34,7 @@ double evaluate_postfix_expression(char ** args, int nargs)
           result = operandOne / operandTwo;
           break;
         case '^':
+          result = pow(operandOne, operandTwo);
           break;
       }
       double_stack_push(stack, result);
