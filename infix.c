@@ -1,5 +1,6 @@
 #include "infix.h"
 #include "stack.h"
+#include "string.h"
 
 /*
 for each token in the input string {
@@ -22,40 +23,66 @@ for each token in the input string {
   }
 }
 */
-// evaluate expression stored as an array of string tokens
 
-// ^ = 0
-// X = 1
-// / = 2
-// + = 3
-// - = 4
-// ( = 5
 double evaluate_infix_expression(char ** args, int nargs) 
 {
   struct double_stack * stack = double_stack_new(nargs);
-  char* output;
+  char* output = malloc(2000 * sizeof(char));
+
   for (int i = 0; i < nargs; i++)
   {
-    char * current = *(args[i]);
-    if (current >= '0' && current <= '9')
-    {
-      output = output + *(args[i]);
-    }
-    else if (current == '(')
-    {
-      double_stack_push(stack, 0);
-    }
-    else if (is_operator(current))
-    {
+    char* token = *(args + i);
 
+    int value = atoi(token);
+    if (value != 0)
+    {
+      output = strcat(output, token);
+    }
+    else if (token == "(")
+    {
+      double_stack_push(stack, i);
+    }
+    else if (is_operator(*token))
+    {
+      fprintf(stderr, "Token is an operator!\n");
     }
   }
+  return 0.0;
 }
 
-// Determines if a character is an operator
-int is_operator(char * c)
+int is_operator(char c)
 {
-  if (c == '+' || c == '-' || c == 'X' || c == '\\' || c == '^')
+  if (c == '+' || c == '-' || c == 'X' || c == '/' || c == '^')
+  {
+    return 1;
+  }
+
+  return 0;
+}
+
+int is_higher(char op, char cmp)
+{
+  if (op == cmp)
+  {
+    return 1;
+  }
+  else if (op == '^')
+  {
+    return 1;
+  }
+  else if (cmp == '^')
+  {
+    return 0;
+  }
+  else if ((op == 'X' && cmp == '\\') || (op == '\\' && cmp == 'X'))
+  {
+    return 1;
+  }
+  else if ((op == '+' && cmp == '-') || (op == '+' && cmp == '-'))
+  {
+    return 1;
+  }
+  else if ((op == 'X' || op == '\\') && (cmp == '+' || cmp == '-'))
   {
     return 1;
   }
