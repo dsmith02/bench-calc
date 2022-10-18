@@ -1,6 +1,7 @@
 #include "infix.h"
 #include "stack.h"
 #include "string.h"
+#include "postfix.h"
 
 /*
 for each token in the input string {
@@ -24,35 +25,68 @@ for each token in the input string {
 }
 */
 
+// function declarations
+int is_operator(char* c);
+int is_higher(char op, char cmp);
+int top_is_op(char* c);
+
 double evaluate_infix_expression(char ** args, int nargs) 
 {
   struct double_stack * stack = double_stack_new(nargs);
   char* output = malloc(2000 * sizeof(char));
+  
 
   for (int i = 0; i < nargs; i++)
   {
     char* token = *(args + i);
-
+    fprintf(stderr, "token %d=%s\n", i, token);
     int value = atoi(token);
     if (value != 0)
     {
       output = strcat(output, token);
     }
-    else if (token == "(")
+    else if (*token == '(')
     {
       double_stack_push(stack, i);
     }
-    else if (is_operator(*token))
+    else if (is_operator(token))
     {
-      fprintf(stderr, "Token is an operator!\n");
+      double* stack_items = stack->items;
+      int* stack_top = &stack->top;
+      fprintf(stderr, "%s\n", *(args + (int) *(stack_items + *stack_top - 1)));
+      while(is_operator(*(args + (int) *(stack_items + *stack_top - 1))) && is_higher(**(args + (int) *(stack_items + *stack_top - 1)), *token))
+      {
+        int index = (int) double_stack_pop(stack);
+        output = strcat(output, *(args + index));
+      }
+      double_stack_push(stack, i);
     }
+    else if (*token == ')')
+    {
+      double* stack_items = stack->items;
+      int* stack_top = &stack->top;
+      while(strcmp(*(args + (int) *(stack_items + *stack_top - 1)), "(") != 0)
+      {
+        int index = (int) double_stack_pop(stack);
+        output = strcat(output, *(args + index));
+        fprintf(stderr, "stack top = %d\n", *stack_top);
+        fprintf(stderr, "output = %s\n", output);
+      }
+      double_stack_pop(stack);
+    }
+  }
+  
+  for (int i = stack->top; i > 0; i--)
+  {
+    int index = (int) double_stack_pop(stack);
+    output = strcat(output, *(args + index));
   }
   return 0.0;
 }
 
-int is_operator(char c)
+int is_operator(char* c)
 {
-  if (c == '+' || c == '-' || c == 'X' || c == '/' || c == '^')
+  if (*c == '+' || *c == '-' || *c == 'X' || *c == '/' || *c == '^')
   {
     return 1;
   }
