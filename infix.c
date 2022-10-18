@@ -28,14 +28,17 @@ for each token in the input string {
 // function declarations
 int is_operator(char* c);
 int is_higher(char op, char cmp);
-int top_is_op(char* c);
+int count_array(char** arr);
 
 double evaluate_infix_expression(char ** args, int nargs) 
 {
   struct double_stack * stack = double_stack_new(nargs);
   char* output = malloc(2000 * sizeof(char));
   
+  char** expression = malloc(2000 * sizeof(char));
+  int exp_args = 0;
 
+  int string_num = 0;
   for (int i = 0; i < nargs; i++)
   {
     char* token = *(args + i);
@@ -43,6 +46,8 @@ double evaluate_infix_expression(char ** args, int nargs)
     int value = atoi(token);
     if (value != 0)
     {
+      *(expression + string_num++) = token;
+      exp_args++;
       output = strcat(output, token);
     }
     else if (*token == '(')
@@ -53,10 +58,12 @@ double evaluate_infix_expression(char ** args, int nargs)
     {
       double* stack_items = stack->items;
       int* stack_top = &stack->top;
-      fprintf(stderr, "%s\n", *(args + (int) *(stack_items + *stack_top - 1)));
-      while(is_operator(*(args + (int) *(stack_items + *stack_top - 1))) && is_higher(**(args + (int) *(stack_items + *stack_top - 1)), *token))
+      // fprintf(stderr, "top of stack -> %s\n", *(args + (int) *(stack_items + *stack_top - 1)));
+      while(is_operator(*(args + (int) *(stack_items + *stack_top - 1))) == 1 && is_higher(**(args + (int) *(stack_items + *stack_top - 1)), *token) == 1)
       {
         int index = (int) double_stack_pop(stack);
+        *(expression + string_num++) = *(args + index);
+        exp_args++;
         output = strcat(output, *(args + index));
       }
       double_stack_push(stack, i);
@@ -69,33 +76,36 @@ double evaluate_infix_expression(char ** args, int nargs)
       {
         int index = (int) double_stack_pop(stack);
         output = strcat(output, *(args + index));
-        fprintf(stderr, "stack top = %d\n", *stack_top);
-        fprintf(stderr, "output = %s\n", output);
+        *(expression + string_num++) = *(args + index);
+        exp_args++;
       }
       double_stack_pop(stack);
     }
   }
-  
+
   for (int i = stack->top; i > 0; i--)
   {
     int index = (int) double_stack_pop(stack);
-    output = strcat(output, *(args + index));
+    *(expression + string_num++) = *(args + index);
+    exp_args++;
   }
-  return 0.0;
+
+  return evaluate_postfix_expression(expression, exp_args);
 }
 
 int is_operator(char* c)
 {
-  if (*c == '+' || *c == '-' || *c == 'X' || *c == '/' || *c == '^')
+  if (strcmp(c, "+") == 0 || strcmp(c, "-") == 0 || strcmp(c, "/") == 0 || strcmp(c, "X") == 0 || strcmp(c, "^") == 0)
   {
     return 1;
   }
-
+  fprintf(stderr, "%s is here and is not an operator\n", c);
   return 0;
 }
 
 int is_higher(char op, char cmp)
 {
+  fprintf(stderr, "op = %c\ncmp = %c\n", op, cmp);
   if (op == cmp)
   {
     return 1;
@@ -108,7 +118,7 @@ int is_higher(char op, char cmp)
   {
     return 0;
   }
-  else if ((op == 'X' && cmp == '\\') || (op == '\\' && cmp == 'X'))
+  else if ((op == 'X' && cmp == '/') || (op == '/' && cmp == 'X'))
   {
     return 1;
   }
@@ -116,7 +126,7 @@ int is_higher(char op, char cmp)
   {
     return 1;
   }
-  else if ((op == 'X' || op == '\\') && (cmp == '+' || cmp == '-'))
+  else if ((op == 'X' || op == '/') && (cmp == '+' || cmp == '-'))
   {
     return 1;
   }
